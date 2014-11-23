@@ -32,7 +32,7 @@ def tridiag_lu(A):
     A = A.todense()
     L = np.identity(n)
     P = sparse.dok_matrix(shape)
-    r = [i for i in range(0, n)]
+    r = range(0, n)
     ops = 0
 
     for p in range(0, n - 1):
