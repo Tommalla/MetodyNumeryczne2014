@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from scipy import sparse
 import numpy as np
+from scipy import sparse
+import time
 
 
 kto = 'Tomasz Zakrzewski'
@@ -81,7 +82,8 @@ def tridiag_solve(A, b):
 
 
 def test_tridiag_lu(dl, d, du, tol=None):
-    if tol is None: tol = np.finfo(np.float_).eps
+    if tol is None:
+        tol = np.finfo(np.float_).eps
     A_data = np.array([d, du, dl], dtype=np.float)
     A_offsets = np.array([0, 1, -1])
     n = len(d)
@@ -92,21 +94,42 @@ def test_tridiag_lu(dl, d, du, tol=None):
     # print (L*U).todense()
     return np.allclose(P.todense() * A.todense(), (L * U).todense(), rtol=tol, atol=0.0)
 
-#testy (można określić "przewidywaną" tolerancję):
-test_tridiag_lu([10,20,30,40,50], [2,4,6,8,10], [3,9,12,15,18])
-test_tridiag_lu([1,2,3,4], [0, 0, 0, 0], [0, 0, 0, 0])
-test_tridiag_lu([0.01]*100, [1.0]*100, [1.0]*100, tol=0.001)
+
+def test_tridiag_solve(dl, d, du, b, tol=None):
+    if tol is None: tol = np.finfo(np.float_).eps
+    A_data = np.array([d, du, dl], dtype=np.float)
+    A_offsets = np.array([0, 1, -1])
+    n = len(d)
+    A = sparse.dia_matrix((A_data, A_offsets), shape=(n, n), dtype=np.float_)
+    x = tridiag_solve(A, b)
+    return np.allclose(A.todense() * np.matrix(x).T, np.matrix(b).T, dtype=np.float_, rtol=tol, atol=0.0)
 
 
-# def test_tridiag_solve(dl, d, du, b, tol=None):
-#     if tol is None: tol = np.finfo(np.float_).eps
-#     A_data = np.array([d, du, dl], dtype=np.float)
-#     A_offsets = np.array([0, 1, -1])
-#     n = len(d)
-#     A = sparse.dia_matrix((A_data, A_offsets), shape=(n, n), dtype=np.float_)
-#     x = tridiag_solve(A, b)
-#     return np.allclose(A.todense() * np.matrix(x).T, np.matrix(b).T, dtype=np.float_, rtol=tol, atol=0.0)
-#
-# #testy
-# test_tridiag_solve([10,20,30,40,50], [2,4,6,8,10], [3,9,12,15,18], np.array([1, -2, 4, -8, 16]))
-# test_tridiag_solve([0.01]*100, [1.0]*100, [1.0]*100, np.array([1.0]*100))
+def testy():
+    tridiag_lu_data = [
+            ([10,20,30,40,50], [2,4,6,8,10], [3,9,12,15,18]),
+            ([1,2,3,4], [0, 0, 0, 0], [0, 0, 0, 0]),
+            ([0.01]*100, [1.0]*100, [1.0]*100),
+    ]
+
+    tridiag_solve_data = [
+            ([10,20,30,40,50], [2,4,6,8,10], [3,9,12,15,18], np.array([1, -2, 4, -8, 16])),
+            ([0.01]*100, [1.0]*100, [1.0]*100, np.array([1.0]*100)),
+    ]
+
+    print('Testuję tridiag_lu z minimalną tolerancją...')
+    for data in tridiag_lu_data:
+        dl, d, du = data
+        begin = time.time()
+        assert(test_tridiag_lu(dl, d, du))
+        print("> Sukces! Czas wykonania testu: %f" % (time.time() - begin))
+
+    print('Testuję tridiag_solve z minimalną tolerancją...')
+    for data in tridiag_solve_data:
+        dl, d, du, b = data
+        begin = time.time()
+        assert(test_tridiag_solve(dl, d, du, b))
+        print("> Sukces! Czas wykonywania testu: %f" % (time.time() - begin))
+
+
+testy()
