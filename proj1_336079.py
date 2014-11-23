@@ -27,29 +27,29 @@ def tridiag_lu(A):
     - L, U to obiekty klasy scipy.sparse.dia_matrix
     - P to obiekt klasy scipy.sparse.dok_matrix
     """
-    A = sparse.csc_matrix(A)
     shape = A.get_shape()
     n, _ = shape
-    L = sparse.csc_matrix(sparse.identity(n))
-    P = sparse.csc_matrix(shape)
+    A = A.todense()
+    L = np.identity(n)
+    P = sparse.dok_matrix(shape)
     r = [i for i in range(0, n)]
     ops = 0
 
     for p in range(0, n - 1):
-        for j in range(p + 1, n):
+        for j in range(p + 1, p + 2):
             if abs(A[r[j], p]) > abs(A[r[p], p]):
                 # Zamieniamy wiersze
                 tmp = r[p]
                 r[p] = r[j]
                 r[j] = tmp
 
-        for k in range(p + 1, n):
+        for k in range(p + 1, min(p + 3, n)):
             A[r[k], p] = A[r[k], p] / A[r[p], p]
-            for c in range(p + 1, n):
+            for c in range(p + 1, min(p + 3, n)):
                 A[r[k], c] = A[r[k], c] - A[r[k], p] * A[r[p], c]
                 ops += 1
 
-    U = sparse.csc_matrix(shape)
+    U = np.zeros(shape=shape)
     for i in range(0, n):
         U[i] = A[r[i]]
 
@@ -61,7 +61,6 @@ def tridiag_lu(A):
 
     print 'Done, needs converting, ops: ', ops
 
-    P = sparse.dok_matrix(P)
     L = sparse.dia_matrix(L)
     U = sparse.dia_matrix(U)
     return P, L, U
@@ -75,6 +74,7 @@ def tridiag_solve(A, b):
 
     Zwraca 1-wymiarową tablicę x
     """
+    P, L, U = tridiag_lu(A)
     # ...
     # return x
     # zaalokuj x, oblicz i zwróć
