@@ -7,18 +7,6 @@ import time
 kto = 'Tomasz Zakrzewski'
 
 
-def swap_rows(A, a, b):
-    """Swapuje wiersze a i b macierzy A.
-
-    Założenie: Macierz A jest obiektem klasy scipy.sparse.csc_matrix.
-    """
-    a_idx = np.where(A.indices == a)
-    b_idx = np.where(A.indices == b)
-    A.indices[a_idx] = b
-    A.indices[b_idx] = a
-    return
-
-
 def tridiag_lu(A):
     """Wyznacza rozkład PA=LU macierzy trójdiagonalnej A.
     A jest obiektem klasy scipy.sparse.dia_matrix.
@@ -33,7 +21,6 @@ def tridiag_lu(A):
     L = np.identity(n)
     P = sparse.dok_matrix(shape)
     r = range(0, n)
-    ops = 0
 
     for p in range(0, n - 1):
         for j in range(p + 1, p + 2):
@@ -47,7 +34,6 @@ def tridiag_lu(A):
             A[r[k], p] = A[r[k], p] / A[r[p], p]
             for c in range(p + 1, min(p + 3, n)):
                 A[r[k], c] = A[r[k], c] - A[r[k], p] * A[r[p], c]
-                ops += 1
 
     U = np.zeros(shape=shape)
     for i in range(0, n):
@@ -58,8 +44,6 @@ def tridiag_lu(A):
         for j in range(0, i):
             L[i, j] = A[r[i], j]
             U[i, j] = 0
-
-    print 'Done, needs converting, ops: ', ops
 
     L = sparse.dia_matrix(L)
     U = sparse.dia_matrix(U)
@@ -75,10 +59,29 @@ def tridiag_solve(A, b):
     Zwraca 1-wymiarową tablicę x
     """
     P, L, U = tridiag_lu(A)
-    # ...
-    # return x
-    # zaalokuj x, oblicz i zwróć
-    pass
+    n = A.shape[0]
+    r = range(0, n)
+    for (i, pi), _ in P.iteritems():
+        r[i] = pi
+
+    L = L.todense()
+    U = U.todense()
+    x = [0 for _ in range(0, n)]
+    y = [0 for _ in range(0, n)]
+
+    for k in range(0, n):
+        sum = 0
+        for i in range(0, k):
+            sum += y[i] * L[k, i]
+        y[k] = (b[r[k]] - sum) / L[k, k]
+
+    for k in reversed(range(0, n)):
+        sum = 0
+        for i in range(k + 1, n):
+            sum += x[i] * U[k, i]
+        x[k] = (y[k] - sum) / U[k, k]
+
+    return x
 
 
 def test_tridiag_lu(dl, d, du, tol=None):
@@ -89,6 +92,7 @@ def test_tridiag_lu(dl, d, du, tol=None):
     n = len(d)
     A = sparse.dia_matrix((A_data, A_offsets), shape=(n, n), dtype=np.float_)
     P, L, U = tridiag_lu(A)
+    # print A.todense()
     # print 'P\n', P.todense(), '\nL\n', L.todense(), '\nU\n', U.todense()
     # print P.todense() * A.todense()
     # print (L*U).todense()
@@ -102,7 +106,11 @@ def test_tridiag_solve(dl, d, du, b, tol=None):
     n = len(d)
     A = sparse.dia_matrix((A_data, A_offsets), shape=(n, n), dtype=np.float_)
     x = tridiag_solve(A, b)
-    return np.allclose(A.todense() * np.matrix(x).T, np.matrix(b).T, dtype=np.float_, rtol=tol, atol=0.0)
+    # print x
+    # print 'b ', np.matrix(b).T
+    # print 'Ax', A.todense() * np.matrix(x).T
+    # print 'diff ',  A.todense() * np.matrix(x).T - np.matrix(b).T
+    return np.allclose(A.todense() * np.matrix(x).T, np.matrix(b).T, rtol=tol, atol=0.0)
 
 
 def testy():
@@ -124,11 +132,12 @@ def testy():
         assert(test_tridiag_lu(dl, d, du))
         print("> Sukces! Czas wykonania testu: %f" % (time.time() - begin))
 
-    print('Testuję tridiag_solve z minimalną tolerancją...')
+    tol = 1e-15
+    print('Testuję tridiag_solve z tolerancją %e' % tol)
     for data in tridiag_solve_data:
         dl, d, du, b = data
         begin = time.time()
-        assert(test_tridiag_solve(dl, d, du, b))
+        assert(test_tridiag_solve(dl, d, du, b, tol=tol))
         print("> Sukces! Czas wykonywania testu: %f" % (time.time() - begin))
 
 
