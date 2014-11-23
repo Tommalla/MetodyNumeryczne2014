@@ -20,6 +20,7 @@ def tridiag_lu(A):
     A = A.todense()
     L = np.identity(n)
     P = sparse.dok_matrix(shape)
+    U = np.zeros(shape=shape)
     r = range(0, n)
 
     for p in range(0, n - 1):
@@ -35,7 +36,6 @@ def tridiag_lu(A):
             for c in range(p + 1, min(p + 3, n)):
                 A[r[k], c] = A[r[k], c] - A[r[k], p] * A[r[p], c]
 
-    U = np.zeros(shape=shape)
     for i in range(0, n):
         U[i] = A[r[i]]
 
@@ -45,9 +45,7 @@ def tridiag_lu(A):
             L[i, j] = A[r[i], j]
             U[i, j] = 0
 
-    L = sparse.dia_matrix(L)
-    U = sparse.dia_matrix(U)
-    return P, L, U
+    return P, sparse.dia_matrix(L), sparse.dia_matrix(U)
 
 
 def tridiag_solve(A, b):
@@ -92,24 +90,17 @@ def test_tridiag_lu(dl, d, du, tol=None):
     n = len(d)
     A = sparse.dia_matrix((A_data, A_offsets), shape=(n, n), dtype=np.float_)
     P, L, U = tridiag_lu(A)
-    # print A.todense()
-    # print 'P\n', P.todense(), '\nL\n', L.todense(), '\nU\n', U.todense()
-    # print P.todense() * A.todense()
-    # print (L*U).todense()
     return np.allclose(P.todense() * A.todense(), (L * U).todense(), rtol=tol, atol=0.0)
 
 
 def test_tridiag_solve(dl, d, du, b, tol=None):
-    if tol is None: tol = np.finfo(np.float_).eps
+    if tol is None:
+        tol = np.finfo(np.float_).eps
     A_data = np.array([d, du, dl], dtype=np.float)
     A_offsets = np.array([0, 1, -1])
     n = len(d)
     A = sparse.dia_matrix((A_data, A_offsets), shape=(n, n), dtype=np.float_)
     x = tridiag_solve(A, b)
-    # print x
-    # print 'b ', np.matrix(b).T
-    # print 'Ax', A.todense() * np.matrix(x).T
-    # print 'diff ',  A.todense() * np.matrix(x).T - np.matrix(b).T
     return np.allclose(A.todense() * np.matrix(x).T, np.matrix(b).T, rtol=tol, atol=0.0)
 
 
