@@ -29,32 +29,41 @@ def tridiag_lu(A):
     A = sparse.csc_matrix(A)
     shape = A.get_shape()
     n, _ = shape
-    L = sparse.csc_matrix(shape)
+    L = sparse.csc_matrix(sparse.identity(n))
     P = sparse.csc_matrix(shape)
+    r = [i for i in range(0, n)]
+    ops = 0
 
-    for k in range(n - 1):
-        # Wybierz większy element.
-        id_big = k
-        range_begin = max(0, k - 1)
-        range_end = range_begin + 2 + (1 if k != 0 else 0)
-        for i in range(range_begin, range_end):
-            if A[i, k] > A[id_big, k]:
-                id_big = i
-        # Zamień wiersze.
-        if id_big != k:
-            swap_rows(A, id_big, k)
-        # Zanotuj zamianę wierszy w P.
-        P[id_big, k] = 1
+    for p in range(0, n - 1):
+        for j in range(p + 1, n):
+            if abs(A[r[j], p]) > abs(A[r[p], p]):
+                # Zamieniamy wiersze
+                tmp = r[p]
+                r[p] = r[j]
+                r[j] = tmp
 
-        for i in range(k + 1, n):
-            m = A[i, k] / A[k, k]
-            L[i, k] = m
-            A[i] = A[i] - m * A[k]
+        for k in range(p + 1, n):
+            A[r[k], p] = A[r[k], p] / A[r[p], p]
+            for c in range(p + 1, n):
+                A[r[k], c] = A[r[k], c] - A[r[k], p] * A[r[p], c]
+                ops += 1
 
-    P = sparse.dia_matrix(P)
+    U = sparse.csc_matrix(shape)
+    for i in range(0, n):
+        U[i] = A[r[i]]
+
+    for i in range(0, n):
+        P[i, r[i]] = 1
+        for j in range(0, i):
+            L[i, j] = A[r[i], j]
+            U[i, j] = 0
+
+    print 'Done, needs converting, ops: ', ops
+
+    P = sparse.dok_matrix(P)
     L = sparse.dia_matrix(L)
-    A = sparse.dia_matrix(A)
-    return P, L, A
+    U = sparse.dia_matrix(U)
+    return P, L, U
 
 
 def tridiag_solve(A, b):
@@ -78,6 +87,9 @@ def test_tridiag_lu(dl, d, du, tol=None):
     n = len(d)
     A = sparse.dia_matrix((A_data, A_offsets), shape=(n, n), dtype=np.float_)
     P, L, U = tridiag_lu(A)
+    # print 'P\n', P.todense(), '\nL\n', L.todense(), '\nU\n', U.todense()
+    # print P.todense() * A.todense()
+    # print (L*U).todense()
     return np.allclose(P.todense() * A.todense(), (L * U).todense(), rtol=tol, atol=0.0)
 
 #testy (można określić "przewidywaną" tolerancję):
