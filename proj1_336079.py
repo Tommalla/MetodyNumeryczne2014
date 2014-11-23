@@ -59,8 +59,13 @@ def tridiag_solve(A, b):
     P, L, U = tridiag_lu(A)
     n = A.shape[0]
     r = range(0, n)
+    # Jeśli nie ma permutacji, to L jest bidiagonalna i cały algorytm liniowy.
+    # Wpp. wyznaczanie y z Ly = b jest kwadratowe.
+    no_perm = True
     for (i, pi), _ in P.iteritems():
         r[i] = pi
+        if i != pi:
+            no_perm = False
 
     L = L.todense()
     U = U.todense()
@@ -69,7 +74,7 @@ def tridiag_solve(A, b):
 
     for k in range(0, n):
         sum = 0
-        for i in range(0, k):
+        for i in range(max(k - 1, 0) if no_perm else 0, k):
             sum += y[i] * L[k, i]
         y[k] = (b[r[k]] - sum) / L[k, k]
 
