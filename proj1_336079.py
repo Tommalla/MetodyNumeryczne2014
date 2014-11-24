@@ -75,7 +75,7 @@ def tridiag_solve(A, b):
 
     for k in reversed(range(0, n)):
         sum = 0
-        for i in range(k + 1, n):
+        for i in range(k + 1, min(k + 3, n)):
             sum += x[i] * U[k, i]
         x[k] = (y[k] - sum) / U[k, k]
 
