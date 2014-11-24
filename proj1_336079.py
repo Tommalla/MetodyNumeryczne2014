@@ -80,7 +80,7 @@ def tridiag_solve(A, b):
 
     for k in reversed(range(0, n)):
         row_sum = 0
-        for i in range(k + 1, min(k + 3, n)):
+        for i in range(k + 1, min(k + 2, n) if no_perm else n):
             row_sum += x[i] * U[k, i]
         x[k] = (y[k] - row_sum) / U[k, k]
 
