@@ -73,16 +73,16 @@ def tridiag_solve(A, b):
     y = [0 for _ in range(0, n)]
 
     for k in range(0, n):
-        sum = 0
+        row_sum = 0
         for i in range(max(k - 1, 0) if no_perm else 0, k):
-            sum += y[i] * L[k, i]
-        y[k] = (b[r[k]] - sum) / L[k, k]
+            row_sum += y[i] * L[k, i]
+        y[k] = (b[r[k]] - row_sum) / L[k, k]
 
     for k in reversed(range(0, n)):
-        sum = 0
+        row_sum = 0
         for i in range(k + 1, min(k + 3, n)):
-            sum += x[i] * U[k, i]
-        x[k] = (y[k] - sum) / U[k, k]
+            row_sum += x[i] * U[k, i]
+        x[k] = (y[k] - row_sum) / U[k, k]
 
     return x
 
