@@ -14,7 +14,7 @@ def rowne(x, y, eps):
     return abs(x - y) <= eps
 
 
-def newton_fractal(p, x_min, x_max, y_min, y_max, delta, a=1, n=30, c=5, eps=1.0e-15):
+def fraktal(p, x_min, x_max, y_min, y_max, delta, a=1, n=30, c=5, eps=1.0e-15):
     """ Klasyfkuje punkty startowe dla uogolnionej metody Newtona w zależności
     od granicznego zachowania ciągu iteracji.
 
@@ -105,7 +105,7 @@ def demo():
     for lista, a, c, eps in dane:
         w = Polynomial(lista)
         pocz = time.time()
-        wynik = newton_fractal(w, -1, 1, -1, 1, 0.003, a=a, c=c, eps=eps)
+        wynik = fraktal(w, -1, 1, -1, 1, 0.003, a=a, c=c, eps=eps)
         display(poly_2_latex(lista))
         print(' a =', a, ' c =', c, 'eps =', eps, 'czas:', time.time() - pocz)
         plt.figure(figsize=(8, 8))
