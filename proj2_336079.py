@@ -1,9 +1,10 @@
+from collections import deque
+import time
+
+from IPython.display import display, Math
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 import matplotlib.pyplot as plt
-from collections import deque
-from IPython.display import display, Math
-import time
 
 
 kto = 'Tomasz Zakrzewski'
